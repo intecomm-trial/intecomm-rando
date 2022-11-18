@@ -1,0 +1,6 @@
+include AUTHORS CHANGES LICENSE VERSION
+include MANIFEST.in
+include *.rst
+recursive-include intecomm_*/templates *
+recursive-include intecomm_*/static *
+recursive-include label_templates *
