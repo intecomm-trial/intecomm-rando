@@ -3,9 +3,7 @@ from __future__ import annotations
 import re
 
 from django.core.exceptions import ObjectDoesNotExist
-from edc_consent.utils import get_consent_model_cls
 from edc_constants.constants import COMPLETE, UUID_PATTERN
-from edc_screening.utils import get_subject_screening_model_cls
 from edc_utils import get_utcnow
 
 from .group_identifier import GroupIdentifier
@@ -25,13 +23,15 @@ def randomize_group(instance):
 
 
 class RandomizeGroup:
-    def __init__(self, instance):
+    def __init__(self, instance, screening_model_cls=None, consent_model_cls=None):
         self.instance = instance
+        self.screening_model_cls = screening_model_cls
+        self.consent_model_cls = consent_model_cls
 
     def randomize_group(self):
         if self.instance.randomized:
             raise GroupAlreadyRandomized(f"Group is already randomized. Got {self.instance}.")
-        if not re.match(UUID_PATTERN, self.instance.group_identifier):
+        if not re.match(UUID_PATTERN, str(self.instance.group_identifier)):
             raise GroupAlreadyRandomized(
                 "Randomization failed. Group identifier already set. "
                 f"See {self.instance.group_identifier}."
@@ -53,7 +53,7 @@ class RandomizeGroup:
 
             # redundantly check consent model
             try:
-                get_consent_model_cls().objects.get(
+                self.consent_model_cls.objects.get(
                     subject_identifier=patient_log.subject_identifier
                 )
             except ObjectDoesNotExist:
@@ -68,10 +68,9 @@ class RandomizeGroup:
     def randomize(self):
         pass
 
-    @staticmethod
-    def check_eligibility(patient_log):
+    def check_eligibility(self, patient_log):
         try:
-            obj = get_subject_screening_model_cls().objects.get(
+            obj = self.screening_model_cls.objects.get(
                 subject_identifier=patient_log.screening_identifier
             )
         except ObjectDoesNotExist:

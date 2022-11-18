@@ -9,10 +9,10 @@ from django.conf import settings
 from django.test.runner import DiscoverRunner
 
 app_name = "intecomm_rando"
-base_dir = Path(__file__).resolve().parent.parent
+base_dir = Path(__file__).resolve().parent
 
 DEFAULT_SETTINGS = dict(  # nosec B106
-    BASE_DIR=Path(__file__).resolve().parent.parent,
+    BASE_DIR=Path(__file__).resolve().parent,
     SECRET_KEY="django-insecure",  # nosec B106
     DEBUG=True,
     SUBJECT_CONSENT_MODEL=None,
@@ -31,6 +31,7 @@ DEFAULT_SETTINGS = dict(  # nosec B106
         "django_revision.apps.AppConfig",
         "edc_model.apps.AppConfig",
         "edc_identifier.apps.AppConfig",
+        "edc_sites.apps.AppConfig",
         "intecomm_rando.apps.AppConfig",
     ],
     MIDDLEWARE=[

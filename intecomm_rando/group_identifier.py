@@ -15,7 +15,7 @@ class GroupIdentifier(ResearchIdentifier):
         """Creates a registered group instance for this
         group identifier.
         """
-        model = django_apps.get_model("intecomm_screening.registeredgroup")
+        model = django_apps.get_model("intecomm_rando.registeredgroup")
         model.objects.create(
             group_identifier=self.identifier,
             site=self.site,
