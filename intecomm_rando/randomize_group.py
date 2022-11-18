@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 
-from django.core.exceptions import ObjectDoesNotExist
 from edc_constants.constants import COMPLETE, UUID_PATTERN
+from edc_randomization.site_randomizers import site_randomizers
 from edc_utils import get_utcnow
 
 from .group_identifier import GroupIdentifier
@@ -23,10 +23,11 @@ def randomize_group(instance):
 
 
 class RandomizeGroup:
-    def __init__(self, instance, screening_model_cls=None, consent_model_cls=None):
+
+    min_group_size = 14
+
+    def __init__(self, instance):
         self.instance = instance
-        self.screening_model_cls = screening_model_cls
-        self.consent_model_cls = consent_model_cls
 
     def randomize_group(self):
         if self.instance.randomized:
@@ -38,6 +39,12 @@ class RandomizeGroup:
             )
         if self.instance.status != COMPLETE:
             raise GroupRandomizationError(f"Group is not complete. Got {self.instance}.")
+
+        if self.instance.patients.all().count() < self.min_group_size:
+            raise GroupRandomizationError(
+                f"Patient group must have at least {self.min_group_size} members."
+            )
+
         for patient_log in self.instance.patients.all():
             if not patient_log.screening_identifier:
                 raise GroupRandomizationError(
@@ -48,41 +55,21 @@ class RandomizeGroup:
                     f"Patient has not consented. Got {patient_log} (1)."
                 )
 
-            # check screening model / eligibility
-            self.check_eligibility(patient_log)
-
-            # redundantly check consent model
-            try:
-                self.consent_model_cls.objects.get(
-                    subject_identifier=patient_log.subject_identifier
-                )
-            except ObjectDoesNotExist:
-                raise GroupRandomizationError(
-                    f"Patient has not consented. Got {patient_log} (2)."
-                )
-
         self.randomize()
 
         return True, get_utcnow(), self.instance.user_modified, self.create_group_identifier()
 
     def randomize(self):
-        pass
-
-    def check_eligibility(self, patient_log):
-        try:
-            obj = self.screening_model_cls.objects.get(
-                subject_identifier=patient_log.screening_identifier
-            )
-        except ObjectDoesNotExist:
-            raise GroupRandomizationError(
-                f"Patient has not been screened. Got {patient_log}. (2)"
-            )
-        else:
-            if not obj.eligible:
-                raise GroupRandomizationError(f"Patient is not eligible. Got {obj}.")
+        site_randomizers.randomize(
+            "default",
+            subject_identifier=self.instance.group_identifier,
+            report_datetime=get_utcnow(),
+            site=self.instance.site,
+            user=self.instance.user_created,
+        )
 
     def create_group_identifier(self):
-        # create group identifierf
+        # create group identifier
         self.instance.group_identifier = GroupIdentifier(
             identifier_type="patient_group",
             requesting_model=self.instance._meta.label_lower,
