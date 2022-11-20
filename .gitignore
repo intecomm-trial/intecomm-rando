@@ -1,8 +1,7 @@
-_version.py
 django_crypto_fields
+_version.py
 .env
 .etc
-etc/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
