@@ -16,7 +16,7 @@ py_version = "310"
 skip = [".tox", ".eggs", "migrations"]
 
 [tool.coverage.run]
-parallel = false
+parallel = true
 branch = true
 source = ["intecomm_rando"]
 
@@ -27,13 +27,16 @@ source = ["intecomm_rando"]
 show_missing = true
 skip_covered = true
 omit = ["requirements.txt"]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+]
 
 [tool.tox]
 legacy_tox_ini = """
 [tox]
 envlist =
-    py{310,311}-dj{41}-edc{prod},
-    py{310,311}-dj{41}-edc{dev},
+    py{310}-dj{40,41,dev},
     lint
 
 isolated_build = true
@@ -41,31 +44,29 @@ isolated_build = true
 [gh-actions]
 python =
     3.10: py310, lint
-    3.11: py311
 
 [gh-actions:env]
 DJANGO =
-    4.1: dj41
+    4.0: dj40
+    4.1: dj41, lint
     dev: djdev
-EDC_CODEBASE =
-    Prod: edcprod, lint
-    Dev: edcdev
 
 [testenv]
 deps =
     -r https://raw.githubusercontent.com/clinicedc/edc/develop/requirements.tests/tox.txt
     -r https://raw.githubusercontent.com/clinicedc/edc/develop/requirements.tests/test_utils.txt
+    -r https://raw.githubusercontent.com/clinicedc/edc/develop/requirements.tests/edc.txt
     -r https://raw.githubusercontent.com/clinicedc/edc/develop/requirements.tests/third_party_dev.txt
+    dj40: Django>=4.0,<4.1
     dj41: Django>=4.1,<4.2
     djdev: https://github.com/django/django/tarball/main
 
 commands =
     pip install -U pip
     pip --version
-    edcdev: pip install -U -r https://raw.githubusercontent.com/clinicedc/edc/develop/requirements.tests/edc.txt
-    edcdev: pip install -U git+https://github.com/effect-trial/effect-form-validators.git@develop
+    pip install -U intecomm_form_validators
     pip freeze
-    coverage run runtests.py
+    coverage run -a runtests.py
     coverage report
 
 [testenv:lint]
