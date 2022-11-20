@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-import re
-
-from edc_constants.constants import COMPLETE, UUID_PATTERN
+from edc_constants.constants import COMPLETE, YES
 from edc_randomization.site_randomizers import site_randomizers
 from edc_utils import get_utcnow
+from intecomm_form_validators.utils import (
+    PatientGroupSizeError,
+    PatientNotConsentedError,
+    PatientNotScreenedError,
+    PatientNotStableError,
+    confirm_patient_group_ratio_or_raise,
+    confirm_patient_group_size_or_raise,
+    confirm_patients_stable_and_screened_and_consented_or_raise,
+)
 
-from .group_identifier import GroupIdentifier
+from intecomm_rando.group_identifier import GroupIdentifier
 
 
 class GroupAlreadyRandomized(Exception):
@@ -17,7 +24,7 @@ class GroupRandomizationError(Exception):
     pass
 
 
-def randomize_group(instance):
+def randomize_group(instance) -> None:
     rando = RandomizeGroup(instance)
     rando.randomize_group()
 
@@ -32,46 +39,68 @@ class RandomizeGroup:
     def randomize_group(self):
         if self.instance.randomized:
             raise GroupAlreadyRandomized(f"Group is already randomized. Got {self.instance}.")
-        if not re.match(UUID_PATTERN, str(self.instance.group_identifier)):
-            raise GroupAlreadyRandomized(
-                "Randomization failed. Group identifier already set. "
-                f"See {self.instance.group_identifier}."
+        if (
+            self.instance.randomize_now != YES
+            or self.instance.confirm_randomize_now != "RANDOMIZE"
+        ):
+            raise GroupRandomizationError(
+                "Invalid. Expected YES. See `randomize_now`. "
+                f"Got {self.instance.randomize_now}."
             )
         if self.instance.status != COMPLETE:
             raise GroupRandomizationError(f"Group is not complete. Got {self.instance}.")
-
-        if self.instance.patients.all().count() < self.min_group_size:
-            raise GroupRandomizationError(
-                f"Patient group must have at least {self.min_group_size} members."
-            )
-
-        for patient_log in self.instance.patients.all():
-            if not patient_log.screening_identifier:
-                raise GroupRandomizationError(
-                    f"Patient has not been screened. Got {patient_log}. (1)"
-                )
-            if not patient_log.subject_identifier:
-                raise GroupRandomizationError(
-                    f"Patient has not consented. Got {patient_log} (1)."
-                )
-
+        self.confirm_patients_stable_and_screened_and_consented_or_raise()
+        self.confirm_patient_group_size_or_raise()
+        self.confirm_patient_group_ratio_or_raise()
         self.randomize()
+        return True, get_utcnow(), self.instance.user_modified, self.instance.group_identifier
 
-        return True, get_utcnow(), self.instance.user_modified, self.create_group_identifier()
+    def confirm_patients_stable_and_screened_and_consented_or_raise(self):
+        try:
+            confirm_patients_stable_and_screened_and_consented_or_raise(
+                patients=self.instance.patients
+            )
+        except (PatientNotStableError, PatientNotScreenedError, PatientNotConsentedError) as e:
+            raise GroupRandomizationError(e)
 
-    def randomize(self):
+    def confirm_patient_group_size_or_raise(self):
+        try:
+            confirm_patient_group_size_or_raise(
+                enforce_group_size_min=self.instance.enforce_group_size_min,
+                patients=self.instance.patients,
+            )
+        except PatientGroupSizeError as e:
+            raise GroupRandomizationError(e)
+
+    def confirm_patient_group_ratio_or_raise(self):
+        confirm_patient_group_ratio_or_raise(
+            patients=self.instance.patients,
+            enforce_ratio=self.instance.enforce_ratio,
+        )
+
+    def randomize(self) -> None:
+        identifier_obj = GroupIdentifier(
+            identifier_type="patient_group",
+            group_identifier_as_pk=self.instance.group_identifier_as_pk,
+            requesting_model=self.instance._meta.label_lower,
+            site=self.instance.site,
+        )
+        report_datetime = get_utcnow()
         site_randomizers.randomize(
             "default",
-            subject_identifier=self.instance.group_identifier,
-            report_datetime=get_utcnow(),
+            identifier=identifier_obj.identifier,
+            report_datetime=report_datetime,
             site=self.instance.site,
             user=self.instance.user_created,
         )
-
-    def create_group_identifier(self):
-        # create group identifier
-        self.instance.group_identifier = GroupIdentifier(
-            identifier_type="patient_group",
-            requesting_model=self.instance._meta.label_lower,
-            site=self.instance.site,
-        ).identifier
+        self.instance.group_identifier = identifier_obj.identifier
+        self.instance.randomized = True
+        self.instance.modified = report_datetime
+        self.instance.save(
+            update_fields=[
+                "group_identifier",
+                "randomized",
+                "modified",
+            ]
+        )
+        self.instance.refresh_from_db()
