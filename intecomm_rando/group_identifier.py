@@ -4,9 +4,19 @@ from edc_utils import get_utcnow
 
 
 class GroupIdentifier(ResearchIdentifier):
+    """Create and save unique group identifier.
+
+    Creates and updates the RegisteredGroup model with the newly
+    created GroupIdentifier.
+    """
+
     template: str = "{site_id}{sequence}"
     label: str = "groupidentifier"
-    padding: int = 3
+    padding: int = 4
+
+    def __init__(self, group_identifier_as_pk=None, **kwargs):
+        self.group_identifier_as_pk = group_identifier_as_pk
+        super().__init__(**kwargs)
 
     def pre_identifier(self) -> None:
         pass
@@ -15,9 +25,11 @@ class GroupIdentifier(ResearchIdentifier):
         """Creates a registered group instance for this
         group identifier.
         """
-        model = django_apps.get_model("intecomm_screening.registeredgroup")
-        model.objects.create(
-            group_identifier=self.identifier,
+        model_cls = django_apps.get_model("intecomm_rando.registeredgroup")
+        obj = model_cls.objects.create(
+            group_identifier_as_pk=self.group_identifier_as_pk,
             site=self.site,
             registration_datetime=get_utcnow(),
         )
+        obj.group_identifier = self.identifier
+        obj.save()

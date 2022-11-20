@@ -5,18 +5,29 @@ import sys
 from pathlib import Path
 
 import django
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.test.runner import DiscoverRunner
+from edc_utils import get_utcnow
 
 app_name = "intecomm_rando"
-base_dir = Path(__file__).resolve().parent.parent
+base_dir = Path(__file__).resolve().parent
 
 DEFAULT_SETTINGS = dict(  # nosec B106
-    BASE_DIR=Path(__file__).resolve().parent.parent,
+    BASE_DIR=Path(__file__).resolve().parent,
     SECRET_KEY="django-insecure",  # nosec B106
     DEBUG=True,
+    EDC_RANDOMIZATION_REGISTER_DEFAULT_RANDOMIZER=False,
+    EDC_RANDOMIZATION_LIST_PATH=os.path.join(base_dir, app_name, "tests", "etc"),
+    KEY_PATH=os.path.join(base_dir, app_name, "tests", "etc"),
+    AUTO_CREATE_KEYS=False,
+    ETC_DIR=os.path.join(base_dir, app_name, "tests", "etc"),
     SUBJECT_CONSENT_MODEL=None,
     SUBJECT_SCREENING_MODEL=None,
+    EDC_PROTOCOL_NUMBER="999",
+    EDC_PROTOCOL_STUDY_OPEN_DATETIME=get_utcnow() - relativedelta(years=1),
+    EDC_PROTOCOL_STUDY_CLOSE_DATETIME=get_utcnow() + relativedelta(years=1),
+    SITE_ID=101,
     ALLOWED_HOSTS=[],
     APP_NAME=app_name,
     INSTALLED_APPS=[
@@ -29,8 +40,10 @@ DEFAULT_SETTINGS = dict(  # nosec B106
         "django.contrib.staticfiles",
         "django_audit_fields.apps.AppConfig",
         "django_revision.apps.AppConfig",
-        "edc_model.apps.AppConfig",
+        "django_crypto_fields.apps.AppConfig",
+        "edc_device.apps.AppConfig",
         "edc_identifier.apps.AppConfig",
+        "edc_sites.apps.AppConfig",
         "intecomm_rando.apps.AppConfig",
     ],
     MIDDLEWARE=[
