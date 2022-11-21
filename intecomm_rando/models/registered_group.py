@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.db import models
 from edc_model.models import BaseUuidModel, HistoricalRecords
 from edc_sites.models import CurrentSiteManager, SiteModelMixin
@@ -16,17 +18,34 @@ class RegisteredGroup(SiteModelMixin, BaseUuidModel):
 
     registration_datetime = models.DateTimeField(default=get_utcnow)
 
-    group_identifier_as_pk = models.UUIDField(max_length=36, unique=True)
-
-    group_identifier = models.CharField(max_length=36, unique=True)
-
-    sid = models.CharField(
-        verbose_name="SID", max_length=15, null=True, blank=True, unique=True
+    group_identifier_as_pk = models.UUIDField(
+        max_length=36,
+        unique=True,
+        help_text="Set to same value from PatientGroup when group is registered",
     )
 
-    randomization_datetime = models.DateTimeField(null=True, blank=True)
+    group_identifier = models.CharField(
+        max_length=36, unique=True, help_text="Updated when group is randomized"
+    )
 
-    randomization_list_model = models.CharField(max_length=150, null=True)
+    sid = models.CharField(
+        verbose_name="SID",
+        max_length=36,
+        unique=True,
+        default=uuid4,
+        help_text=(
+            "Default value is UUID for unique constraint. "
+            "Updated to a real SID when group is randomized"
+        ),
+    )
+
+    randomization_datetime = models.DateTimeField(
+        null=True, blank=True, help_text="Updated when group is randomized"
+    )
+
+    randomization_list_model = models.CharField(
+        max_length=150, null=True, help_text="Updated when group is randomized"
+    )
 
     on_site = CurrentSiteManager()
 

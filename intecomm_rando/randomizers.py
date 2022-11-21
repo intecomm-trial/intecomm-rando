@@ -1,4 +1,4 @@
-from edc_constants.constants import CONTROL, INTERVENTION
+from edc_constants.constants import CONTROL, INTERVENTION, UUID_PATTERN
 from edc_randomization.randomizer import Randomizer as Base
 from edc_randomization.site_randomizers import site_randomizers
 
@@ -28,6 +28,11 @@ class Randomizer(Base):
     @classmethod
     def get_registration_model_cls(cls):
         return RegisteredGroup
+
+    def get_unallocated_registration_obj(self):
+        return self.get_registration_model_cls().objects.get(
+            **dict(sid__regex=UUID_PATTERN.pattern), **self.identifier_opts
+        )
 
 
 site_randomizers.register(Randomizer)
