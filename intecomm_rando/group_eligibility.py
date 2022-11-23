@@ -55,7 +55,7 @@ class GroupEligibility:
     def confirm_patient_group_size_or_raise(self):
         try:
             confirm_patient_group_size_or_raise(
-                enforce_group_size_min=self.instance.enforce_group_size_min,
+                bypass_group_size_min=self.instance.bypass_group_size_min,
                 patients=self.instance.patients,
             )
         except PatientGroupSizeError as e:
@@ -67,7 +67,7 @@ class GroupEligibility:
         try:
             confirm_patient_group_ratio_or_raise(
                 patients=self.instance.patients,
-                enforce_ratio=self.instance.enforce_ratio,
+                bypass_group_ratio=self.instance.bypass_group_ratio,
             )
         except PatientGroupRatioError as e:
             if self.called_by_rando:
