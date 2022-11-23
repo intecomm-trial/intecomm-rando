@@ -5,6 +5,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import tag
 from django_mock_queries.query import MockSet
 from edc_constants.constants import COMPLETE, NO, UUID_PATTERN, YES
 from edc_randomization.site_randomizers import site_randomizers
@@ -20,7 +21,8 @@ from intecomm_rando.randomize_group import (
 from intecomm_rando.randomize_group import RandomizeGroup as BaseRandomizeGroup
 from intecomm_rando.randomize_group import randomize_group
 from intecomm_rando.randomizers import Randomizer
-from intecomm_rando.tests.sites import all_sites
+
+from ..sites import all_sites
 
 
 class RandomizeGroup(BaseRandomizeGroup):
@@ -154,8 +156,10 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient has not consented", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
+    @tag("1")
     def test_complete_group_enough_members_all_consented(self):
         group_identifier_as_pk = str(uuid4())
+        patients = MockSet(*self.get_mock_patients(stable=True, screen=True, consent=True))
         patient_group = PatientGroupMockModel(
             randomized=False,
             randomize_now=YES,
@@ -163,14 +167,14 @@ class RandoTests(TestCaseMixin):
             group_identifier=group_identifier_as_pk,
             group_identifier_as_pk=group_identifier_as_pk,
             status=COMPLETE,
-            patients=MockSet(*self.get_mock_patients(stable=True, screen=True, consent=True)),
+            patients=patients,
             site=Site.objects.get(id=settings.SITE_ID),
         )
         randomizer = RandomizeGroup(patient_group)
         try:
             randomizer.randomize_group()
-        except GroupRandomizationError:
-            self.fail("GroupRandomizationError unexpectedly raised.")
+        except GroupRandomizationError as e:
+            self.fail(f"GroupRandomizationError unexpectedly raised. Got {e}")
         self.assertTrue(patient_group.randomized)
 
     def test_complete_group_but_randomize_now_is_no(self):
