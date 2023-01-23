@@ -5,7 +5,6 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import tag
 from django_mock_queries.query import MockSet
 from edc_constants.constants import COMPLETE, NO, UUID_PATTERN, YES
 from edc_randomization.site_randomizers import site_randomizers
@@ -19,13 +18,20 @@ from intecomm_rando.randomize_group import (
     GroupRandomizationError,
 )
 from intecomm_rando.randomize_group import RandomizeGroup as BaseRandomizeGroup
-from intecomm_rando.randomize_group import randomize_group
 from intecomm_rando.randomizers import Randomizer
 
+from ..models import SubjectConsent
 from ..sites import all_sites
 
 
 class RandomizeGroup(BaseRandomizeGroup):
+
+    subject_consent_model = None
+
+    @property
+    def subject_consent_model_cls(self):
+        return SubjectConsent
+
     def create_group_identifier(self):
         return f"999{str(uuid4())[0:10].upper()}"
 
@@ -50,8 +56,9 @@ class RandoTests(TestCaseMixin):
             patients=MockSet(*self.get_mock_patients(stable=True, screen=True, consent=True)),
             site=Site.objects.get(id=settings.SITE_ID),
         )
+        for patient in patient_group.patients.all():
+            SubjectConsent.objects.create(subject_identifier=patient.subject_identifier)
         self.assertRegexpMatches(patient_group.group_identifier, UUID_PATTERN)
-
         randomizer = RandomizeGroup(patient_group)
         randomizer.randomize_group()
 
@@ -156,7 +163,6 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient has not consented", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
-    @tag("1")
     def test_complete_group_enough_members_all_consented(self):
         group_identifier_as_pk = str(uuid4())
         patients = MockSet(*self.get_mock_patients(stable=True, screen=True, consent=True))
@@ -170,6 +176,8 @@ class RandoTests(TestCaseMixin):
             patients=patients,
             site=Site.objects.get(id=settings.SITE_ID),
         )
+        for patient in patient_group.patients.all():
+            SubjectConsent.objects.create(subject_identifier=patient.subject_identifier)
         randomizer = RandomizeGroup(patient_group)
         try:
             randomizer.randomize_group()
@@ -189,8 +197,11 @@ class RandoTests(TestCaseMixin):
             patients=MockSet(*self.get_mock_patients(stable=True, screen=True, consent=True)),
             site=Site.objects.get(id=settings.SITE_ID),
         )
+        for patient in patient_group.patients.all():
+            SubjectConsent.objects.create(subject_identifier=patient.subject_identifier)
+        randomize_group = RandomizeGroup(patient_group)
         try:
-            randomize_group(patient_group)
+            randomize_group.randomize_group()
         except GroupRandomizationError:
             self.fail("GroupRandomizationError unexpectedly raised.")
         self.assertTrue(patient_group.randomized)
@@ -207,7 +218,8 @@ class RandoTests(TestCaseMixin):
             patients=MockSet(*self.get_mock_patients(stable=True, screen=True, consent=True)),
             site=Site.objects.get(id=settings.SITE_ID),
         )
+        randomize_group = RandomizeGroup(patient_group)
         with self.assertRaises(GroupRandomizationError) as cm:
-            randomize_group(patient_group)
+            randomize_group.randomize_group()
         self.assertIn("Expected YES", str(cm.exception))
         self.assertFalse(patient_group.randomized)

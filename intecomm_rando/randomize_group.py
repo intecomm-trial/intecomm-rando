@@ -24,6 +24,7 @@ def randomize_group(instance: PatientGroup) -> None:
 class RandomizeGroup:
 
     min_group_size = 14
+    subject_consent_model = "intecomm_consent.subjectconsent"
 
     def __init__(self, instance: PatientGroup):
         self.instance = instance
@@ -82,12 +83,15 @@ class RandomizeGroup:
         self.update_patient_log_and_consent()
 
     def update_patient_log_and_consent(self):
-        subject_consent_model_cls = django_apps.get_model("intecomm_consent.subjectconsent")
         for patient in self.instance.patients.all():
             patient.group_identifier = self.instance.group_identifier
             patient.save()
-            subject_consent = subject_consent_model_cls.objects.get(
+            subject_consent = self.subject_consent_model_cls.objects.get(
                 subject_identifier=patient.subject_identifier
             )
             subject_consent.group_identifier = self.instance.group_identifier
             subject_consent.save()
+
+    @property
+    def subject_consent_model_cls(self):
+        return django_apps.get_model(self.subject_consent_model)
