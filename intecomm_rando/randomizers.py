@@ -1,24 +1,27 @@
-from edc_constants.constants import CONTROL, INTERVENTION, UUID_PATTERN
+from edc_constants.constants import UUID_PATTERN
 from edc_randomization.randomizer import Randomizer as Base
 from edc_randomization.site_randomizers import site_randomizers
 
+from .constants import CLINIC_CONTROL, COMM_INTERVENTION
 from .models import RegisteredGroup
 
 
 class Randomizer(Base):
     """Randomize a Patient Group.
 
-    Intevention: Integrated Community-based care
+    Intervention: Integrated Community-based care
     Control: Integrated clinic-based care
     """
 
-    assignment_map = {INTERVENTION: 1, CONTROL: 2}
+    assignment_map = {COMM_INTERVENTION: 1, CLINIC_CONTROL: 2}
     assignment_description_map = {
-        INTERVENTION: "intervention",
-        CONTROL: "control",
+        COMM_INTERVENTION: "Integrated Community Care",
+        CLINIC_CONTROL: "Integrated Clinic-based care",
     }
     trial_is_blinded = False
     model: str = "intecomm_rando.randomizationlist"
+
+    extra_csv_fieldnames = ["description", "facility_type", "country", "version"]
 
     def __init__(self, **kwargs):
         kwargs["identifier_attr"] = "group_identifier"
