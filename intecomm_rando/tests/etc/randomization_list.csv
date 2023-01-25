@@ -1,8 +1,8 @@
-sid,assignment,site_name
-10101,intervention,kasangati
-10102,control,kasangati
-10103,intervention,kasangati
-10104,control,kasangati
-10105,control,kasangati
-10106,intervention,kasangati
-10107,control,kasangati
+sid,assignment,site_name,description,facility_type,country,version
+10101,a,kasangati,community-based care,HF1,UG,1
+10102,b,kasangati,clinic-based care,HF1,UG,1
+10103,a,kasangati,community-based care,HF1,UG,1
+10104,b,kasangati,clinic-based care,HF1,UG,1
+10105,b,kasangati,clinic-based care,HF1,UG,1
+10106,a,kasangati,community-based care,HF1,UG,1
+10107,b,kasangati,clinic-based care,HF1,UG,1

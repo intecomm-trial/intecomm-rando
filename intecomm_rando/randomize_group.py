@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from django.apps import apps as django_apps
 from edc_constants.constants import COMPLETE, YES
 from edc_randomization.site_randomizers import site_randomizers
 from edc_utils import get_utcnow
+from intecomm_form_validators import IN_FOLLOWUP
 
 from .exceptions import GroupAlreadyRandomized, GroupRandomizationError
 from .group_eligibility import assess_group_eligibility
@@ -22,6 +24,7 @@ def randomize_group(instance: PatientGroup) -> None:
 class RandomizeGroup:
 
     min_group_size = 14
+    subject_consent_model = "intecomm_consent.subjectconsent"
 
     def __init__(self, instance: PatientGroup):
         self.instance = instance
@@ -64,12 +67,31 @@ class RandomizeGroup:
         )
         self.instance.group_identifier = identifier_instance.identifier
         self.instance.randomized = True
+        self.instance.randomized_datetime = report_datetime
         self.instance.modified = report_datetime
+        self.instance.status = IN_FOLLOWUP
         self.instance.save(
             update_fields=[
                 "group_identifier",
                 "randomized",
+                "randomized_datetime",
                 "modified",
+                "status",
             ]
         )
         self.instance.refresh_from_db()
+        self.update_patient_log_and_consent()
+
+    def update_patient_log_and_consent(self):
+        for patient in self.instance.patients.all():
+            patient.group_identifier = self.instance.group_identifier
+            patient.save()
+            subject_consent = self.subject_consent_model_cls.objects.get(
+                subject_identifier=patient.subject_identifier
+            )
+            subject_consent.group_identifier = self.instance.group_identifier
+            subject_consent.save()
+
+    @property
+    def subject_consent_model_cls(self):
+        return django_apps.get_model(self.subject_consent_model)

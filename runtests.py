@@ -21,6 +21,7 @@ DEFAULT_SETTINGS = dict(  # nosec B106
     EDC_RANDOMIZATION_LIST_PATH=os.path.join(base_dir, app_name, "tests", "etc"),
     KEY_PATH=os.path.join(base_dir, app_name, "tests", "etc"),
     AUTO_CREATE_KEYS=False,
+    EDC_DX_LABELS=dict(hiv="HIV", dm="Diabetes", htn="Hypertension"),
     ETC_DIR=os.path.join(base_dir, app_name, "tests", "etc"),
     SUBJECT_CONSENT_MODEL=None,
     SUBJECT_SCREENING_MODEL=None,
@@ -44,6 +45,8 @@ DEFAULT_SETTINGS = dict(  # nosec B106
         "edc_device.apps.AppConfig",
         "edc_identifier.apps.AppConfig",
         "edc_sites.apps.AppConfig",
+        # "intecomm_consent.apps.AppConfig",
+        "intecomm_rando.tests",
         "intecomm_rando.apps.AppConfig",
     ],
     MIDDLEWARE=[
