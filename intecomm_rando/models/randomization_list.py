@@ -4,7 +4,6 @@ from edc_randomization.model_mixins import RandomizationListModelMixin
 
 
 class RandomizationList(RandomizationListModelMixin, BaseUuidModel):
-
     group_identifier = models.CharField(
         verbose_name="Group Identifier", max_length=50, null=True, unique=True
     )

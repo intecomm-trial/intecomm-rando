@@ -25,7 +25,6 @@ from ..sites import all_sites
 
 
 class RandomizeGroup(BaseRandomizeGroup):
-
     subject_consent_model = None
 
     @property

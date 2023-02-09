@@ -22,7 +22,6 @@ def randomize_group(instance: PatientGroup) -> None:
 
 
 class RandomizeGroup:
-
     min_group_size = 14
     subject_consent_model = "intecomm_consent.subjectconsent"
 
