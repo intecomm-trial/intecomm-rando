@@ -17,6 +17,7 @@ from ..randomize_group import randomize_group
     dispatch_uid="randomize_group_on_post_save",
 )
 def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
+    """Randomize a patient group if ready and not already randomized."""
     if not raw and instance and instance._meta.label_lower.split(".")[1] == "patientgroup":
         if (
             not instance.randomized
@@ -24,7 +25,7 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
             and instance.confirm_randomize_now == "RANDOMIZE"
             and instance.status == COMPLETE
         ):
-            if not re.match(UUID_PATTERN, instance.group_identifier):
+            if not re.match(UUID_PATTERN, str(instance.group_identifier)):
                 raise RandomizationError(
                     "Failed to randomize group. Group identifier is not a uuid. "
                     f"Has this group already been randomized? Got {instance.group_identifier}."
