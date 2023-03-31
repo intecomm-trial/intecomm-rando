@@ -66,7 +66,7 @@ class GroupEligibility:
     def confirm_patient_group_ratio_or_raise(self):
         try:
             confirm_patient_group_ratio_or_raise(
-                patients=self.instance.patients,
+                patients=self.instance.patients.all(),
                 bypass_group_ratio=self.instance.bypass_group_ratio,
             )
         except PatientGroupRatioError as e:

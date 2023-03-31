@@ -7,7 +7,6 @@ from edc_utils import get_utcnow
 
 
 class RegisteredGroupManager(models.Manager):
-
     use_in_migrations = True
 
     def get_by_natural_key(self, group_identifier_as_pk):
@@ -15,7 +14,6 @@ class RegisteredGroupManager(models.Manager):
 
 
 class RegisteredGroup(SiteModelMixin, BaseUuidModel):
-
     registration_datetime = models.DateTimeField(default=get_utcnow)
 
     group_identifier_as_pk = models.UUIDField(
