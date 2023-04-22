@@ -5,7 +5,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import override_settings, tag
+from django.test import override_settings
 from django_mock_queries.query import MockSet
 from edc_constants.constants import COMPLETE, NO, UUID_PATTERN, YES
 from edc_randomization.site_randomizers import site_randomizers
@@ -48,7 +48,6 @@ class RandoTests(TestCaseMixin):
         for country, sites in all_sites.items():
             add_or_update_django_sites(sites=sites, verbose=False)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_ok(self):
         group_identifier_as_pk = str(uuid4())
@@ -95,7 +94,6 @@ class RandoTests(TestCaseMixin):
         except ObjectDoesNotExist:
             self.fail("ObjectDoesNotExist unexpectedly raised (RandomizationList)")
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_already_randomized(self):
         patients = self.get_mock_patients(
@@ -121,7 +119,6 @@ class RandoTests(TestCaseMixin):
         self.assertTrue(patient_group.randomized)
         self.assertRaises(GroupAlreadyRandomized, randomizer.randomize_group)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_incomplete_group(self):
         patients = self.get_mock_patients(
@@ -148,7 +145,6 @@ class RandoTests(TestCaseMixin):
         self.assertRaises(GroupRandomizationError, randomizer.randomize_group)
         self.assertFalse(patient_group.randomized)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_but_not_enough_members(self):
         patients = self.get_mock_patients(
@@ -177,7 +173,6 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient group must have at least", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_not_screened(self):
         patients = self.get_mock_patients(
@@ -206,7 +201,6 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient has not screened", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_not_consented(self):
         patients = self.get_mock_patients(
@@ -235,7 +229,6 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient has not consented", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_all_consented(self):
         group_identifier_as_pk = str(uuid4())
@@ -268,7 +261,6 @@ class RandoTests(TestCaseMixin):
             self.fail(f"GroupRandomizationError unexpectedly raised. Got {e}")
         self.assertTrue(patient_group.randomized)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_but_randomize_now_is_no(self):
         group_identifier_as_pk = str(uuid4())
@@ -301,7 +293,6 @@ class RandoTests(TestCaseMixin):
             self.fail("GroupRandomizationError unexpectedly raised.")
         self.assertTrue(patient_group.randomized)
 
-    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_all_consented_func(self):
         group_identifier_as_pk = str(uuid4())
