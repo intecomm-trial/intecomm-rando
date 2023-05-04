@@ -7,8 +7,10 @@ from edc_randomization.constants import RANDOMIZED
 from edc_randomization.randomizer import RandomizationError
 from edc_randomization.utils import get_object_for_subject
 from edc_registration.models import RegisteredSubject
+from edc_visit_schedule import site_visit_schedules
 
-from ..randomize_group import randomize_group
+from ..constants import CLINIC_CONTROL, COMM_INTERVENTION
+from ..randomize_group import RandomizeGroup
 
 
 @receiver(
@@ -17,7 +19,10 @@ from ..randomize_group import randomize_group
     dispatch_uid="randomize_group_on_post_save",
 )
 def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
-    """Randomize a patient group if ready and not already randomized."""
+    """Randomize a patient group if ready and not already randomized.
+
+    Note: may be called by the model or its proxy.
+    """
     if not raw and instance and instance._meta.label_lower.split(".")[1] == "patientgroup":
         if (
             not instance.randomized
@@ -30,9 +35,12 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
                     "Failed to randomize group. Group identifier is not a uuid. "
                     f"Has this group already been randomized? Got {instance.group_identifier}."
                 )
-            randomize_group(instance)
+
+            rando = RandomizeGroup(instance)
+            _, _, _, group_identifier = rando.randomize_group()
+
             rando_obj = get_object_for_subject(
-                instance.group_identifier, "default", identifier_fld="group_identifier"
+                group_identifier, "default", identifier_fld="group_identifier"
             )
             randomization_datetime = rando_obj.allocated_datetime
             for patient in instance.patients.all():
@@ -51,3 +59,14 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
                         "randomization_list_model",
                     ]
                 )
+                if rando_obj.assignment in [COMM_INTERVENTION, CLINIC_CONTROL]:
+                    model_name = (
+                        "intecomm_prn.onschedulecomm"
+                        if rando_obj.assignment == COMM_INTERVENTION
+                        else "intecomm_prn.onscheduleinte"
+                    )
+                    _, schedule = site_visit_schedules.get_by_onschedule_model(model_name)
+                    schedule.put_on_schedule(
+                        subject_identifier=patient.subject_identifier,
+                        onschedule_datetime=randomization_datetime,
+                    )
