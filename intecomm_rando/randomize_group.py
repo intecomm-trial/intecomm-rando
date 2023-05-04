@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from datetime import datetime
+from typing import TYPE_CHECKING, Tuple
 
 from django.apps import apps as django_apps
 from edc_constants.constants import COMPLETE, YES
@@ -22,11 +23,6 @@ if TYPE_CHECKING:
     from intecomm_screening.models import PatientGroup, PatientLog
 
 
-def randomize_group(instance: PatientGroup) -> None:
-    rando = RandomizeGroup(instance)
-    rando.randomize_group()
-
-
 class RandomizeGroup:
     min_group_size = 14
     subject_consent_model = "intecomm_consent.subjectconsent"
@@ -34,7 +30,7 @@ class RandomizeGroup:
     def __init__(self, instance: PatientGroup):
         self.instance = instance
 
-    def randomize_group(self):
+    def randomize_group(self) -> Tuple[bool, datetime, str, str]:
         if self.instance.randomized:
             raise GroupAlreadyRandomized(f"Group is already randomized. Got {self.instance}.")
         if (
@@ -104,14 +100,14 @@ class RandomizeGroup:
 
     def update_patient_log(self, patient_log: PatientLog):
         patient_log.group_identifier = self.instance.group_identifier
-        patient_log.save()
+        patient_log.save(update_fields=["group_identifier"])
 
     def update_subject_consent(self, patient_log: PatientLog):
         subject_consent = self.subject_consent_model_cls.objects.get(
             subject_identifier=patient_log.subject_identifier
         )
         subject_consent.group_identifier = self.instance.group_identifier
-        subject_consent.save()
+        subject_consent.save(update_fields=["group_identifier"])
 
     def update_registered_subject(self, patient_log: PatientLog):
         randomization_datetime = self.randomization_list_obj.allocated_datetime
