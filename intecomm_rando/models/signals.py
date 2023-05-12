@@ -23,7 +23,11 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
 
     Note: may be called by the model or its proxy.
     """
-    if not raw and instance and instance._meta.label_lower.split(".")[1] == "patientgroup":
+    if (
+        not raw
+        and instance
+        and instance._meta.label_lower.split(".")[1] == "patientgrouprando"
+    ):
         if (
             not instance.randomized
             and instance.randomize_now == YES
