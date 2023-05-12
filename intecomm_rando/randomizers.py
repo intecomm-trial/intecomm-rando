@@ -15,8 +15,8 @@ class Randomizer(Base):
 
     assignment_map = {COMM_INTERVENTION: 1, CLINIC_CONTROL: 2}
     assignment_description_map = {
-        COMM_INTERVENTION: "Integrated Community Care",
-        CLINIC_CONTROL: "Integrated Clinic-based care",
+        COMM_INTERVENTION: "Integrated community-based care",
+        CLINIC_CONTROL: "Integrated facility-based care",
     }
     trial_is_blinded = False
     model: str = "intecomm_rando.randomizationlist"
