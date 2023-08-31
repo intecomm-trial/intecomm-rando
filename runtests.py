@@ -24,6 +24,7 @@ project_settings = DefaultTestSettings(
     EDC_RANDOMIZATION_REGISTER_DEFAULT_RANDOMIZER=False,
     EDC_RANDOMIZATION_SKIP_VERIFY_CHECKS=True,
     EDC_RANDOMIZATION_LIST_PATH=os.path.join(base_dir, app_name, "tests", "etc"),
+    SUBJECT_VISIT_MODEL="edc_visit_tracking.subjectvisit",
     INSTALLED_APPS=[
         "django.contrib.admin",
         "django.contrib.auth",
@@ -40,6 +41,9 @@ project_settings = DefaultTestSettings(
         "edc_identifier.apps.AppConfig",
         "edc_sites.apps.AppConfig",
         "edc_registration.apps.AppConfig",
+        "edc_visit_tracking.apps.AppConfig",
+        "edc_notification.apps.AppConfig",
+        "edc_action_item.apps.AppConfig",
         # "intecomm_consent.apps.AppConfig",
         "intecomm_rando.tests",
         "intecomm_rando.apps.AppConfig",
