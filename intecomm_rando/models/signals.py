@@ -9,7 +9,7 @@ from edc_randomization.utils import get_object_for_subject
 from edc_registration.models import RegisteredSubject
 from edc_visit_schedule import site_visit_schedules
 
-from ..constants import CLINIC_CONTROL, COMM_INTERVENTION
+from ..constants import COMMUNITY_ARM, FACILITY_ARM
 from ..randomize_group import RandomizeGroup
 
 
@@ -63,10 +63,10 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
                         "randomization_list_model",
                     ]
                 )
-                if rando_obj.assignment in [COMM_INTERVENTION, CLINIC_CONTROL]:
+                if rando_obj.assignment in [COMMUNITY_ARM, FACILITY_ARM]:
                     model_name = (
                         "intecomm_prn.onschedulecomm"
-                        if rando_obj.assignment == COMM_INTERVENTION
+                        if rando_obj.assignment == COMMUNITY_ARM
                         else "intecomm_prn.onscheduleinte"
                     )
                     _, schedule = site_visit_schedules.get_by_onschedule_model(model_name)

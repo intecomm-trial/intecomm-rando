@@ -2,7 +2,7 @@ from edc_constants.constants import UUID_PATTERN
 from edc_randomization.randomizer import Randomizer as Base
 from edc_randomization.site_randomizers import site_randomizers
 
-from .constants import CLINIC_CONTROL, COMM_INTERVENTION
+from .constants import COMMUNITY_ARM, FACILITY_ARM
 from .models import RegisteredGroup
 
 
@@ -13,10 +13,10 @@ class Randomizer(Base):
     Control: Integrated clinic-based care
     """
 
-    assignment_map = {COMM_INTERVENTION: 1, CLINIC_CONTROL: 2}
+    assignment_map = {COMMUNITY_ARM: 1, FACILITY_ARM: 2}
     assignment_description_map = {
-        COMM_INTERVENTION: "Integrated community-based care",
-        CLINIC_CONTROL: "Integrated facility-based care",
+        COMMUNITY_ARM: "Integrated community-based care",
+        FACILITY_ARM: "Integrated facility-based care",
     }
     trial_is_blinded = False
     model: str = "intecomm_rando.randomizationlist"
