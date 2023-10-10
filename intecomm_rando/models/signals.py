@@ -7,7 +7,7 @@ from edc_randomization.constants import RANDOMIZED
 from edc_randomization.randomizer import RandomizationError
 from edc_randomization.utils import get_object_for_subject
 from edc_registration.models import RegisteredSubject
-from edc_visit_schedule import site_visit_schedules
+from edc_visit_schedule.site_visit_schedules import site_visit_schedules
 
 from ..constants import COMMUNITY_ARM, FACILITY_ARM
 from ..randomize_group import RandomizeGroup
