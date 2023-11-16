@@ -11,6 +11,7 @@ from edc_visit_schedule.site_visit_schedules import site_visit_schedules
 
 from ..constants import COMMUNITY_ARM, FACILITY_ARM
 from ..randomize_group import RandomizeGroup
+from ..utils import update_appt_type_on_new_appointments
 
 
 @receiver(
@@ -69,8 +70,15 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
                         if rando_obj.assignment == COMMUNITY_ARM
                         else "intecomm_prn.onscheduleinte"
                     )
-                    _, schedule = site_visit_schedules.get_by_onschedule_model(model_name)
+                    visit_schedule, schedule = site_visit_schedules.get_by_onschedule_model(
+                        model_name
+                    )
                     schedule.put_on_schedule(
                         subject_identifier=patient.subject_identifier,
                         onschedule_datetime=randomization_datetime,
+                    )
+                    update_appt_type_on_new_appointments(
+                        subject_identifier=patient.subject_identifier,
+                        visit_schedule_name=visit_schedule.name,
+                        schedule_name=schedule.name,
                     )
