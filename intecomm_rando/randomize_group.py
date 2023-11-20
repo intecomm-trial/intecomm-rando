@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Tuple
 
 from django.apps import apps as django_apps
+from django.core.exceptions import ObjectDoesNotExist
 from edc_constants.constants import COMPLETE, YES
 from edc_randomization.constants import RANDOMIZED
 from edc_randomization.site_randomizers import site_randomizers
@@ -94,9 +95,21 @@ class RandomizeGroup:
 
     def update_patient_logs_and_consents(self):
         for patient in self.instance.patients.all():
-            self.update_patient_log(patient)
-            self.update_subject_consent(patient)
-            self.update_registered_subject(patient)
+            self._update_all_for_one_patient(patient, skip_lookup=True)
+
+    def _update_all_for_one_patient(self, patient: PatientLog, skip_lookup: bool = None):
+        if not skip_lookup:
+            try:
+                patient = self.instance.patients.get(
+                    subject_identifier=patient.subject_identifier
+                )
+            except ObjectDoesNotExist:
+                raise GroupRandomizationError(
+                    f"Patient not in group. See group {self.instance.name}. Got {patient}."
+                )
+        self.update_patient_log(patient)
+        self.update_subject_consent(patient)
+        self.update_registered_subject(patient)
 
     def update_patient_log(self, patient_log: PatientLog):
         patient_log.group_identifier = self.instance.group_identifier
