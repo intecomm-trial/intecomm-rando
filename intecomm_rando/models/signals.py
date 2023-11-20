@@ -3,15 +3,11 @@ import re
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from edc_constants.constants import COMPLETE, UUID_PATTERN, YES
-from edc_randomization.constants import RANDOMIZED
 from edc_randomization.randomizer import RandomizationError
 from edc_randomization.utils import get_object_for_subject
-from edc_registration.models import RegisteredSubject
-from edc_visit_schedule.site_visit_schedules import site_visit_schedules
 
-from ..constants import COMMUNITY_ARM, FACILITY_ARM
 from ..randomize_group import RandomizeGroup
-from ..utils import update_appt_type_on_new_appointments
+from ..utils import update_patient_in_newly_randomized_group
 
 
 @receiver(
@@ -49,36 +45,6 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
             )
             randomization_datetime = rando_obj.allocated_datetime
             for patient in instance.patients.all():
-                rs_obj = RegisteredSubject.objects.get(
-                    subject_identifier=patient.subject_identifier
+                update_patient_in_newly_randomized_group(
+                    patient, rando_obj, randomization_datetime
                 )
-                rs_obj.randomization_datetime = randomization_datetime
-                rs_obj.sid = rando_obj.sid
-                rs_obj.registration_status = RANDOMIZED
-                rs_obj.randomization_list_model = rando_obj._meta.label_lower
-                rs_obj.save(
-                    update_fields=[
-                        "randomization_datetime",
-                        "sid",
-                        "registration_status",
-                        "randomization_list_model",
-                    ]
-                )
-                if rando_obj.assignment in [COMMUNITY_ARM, FACILITY_ARM]:
-                    model_name = (
-                        "intecomm_prn.onschedulecomm"
-                        if rando_obj.assignment == COMMUNITY_ARM
-                        else "intecomm_prn.onscheduleinte"
-                    )
-                    visit_schedule, schedule = site_visit_schedules.get_by_onschedule_model(
-                        model_name
-                    )
-                    schedule.put_on_schedule(
-                        subject_identifier=patient.subject_identifier,
-                        onschedule_datetime=randomization_datetime,
-                    )
-                    update_appt_type_on_new_appointments(
-                        subject_identifier=patient.subject_identifier,
-                        visit_schedule_name=visit_schedule.name,
-                        schedule_name=schedule.name,
-                    )
