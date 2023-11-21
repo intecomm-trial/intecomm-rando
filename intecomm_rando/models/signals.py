@@ -46,5 +46,5 @@ def randomize_patient_group_on_post_save(sender, instance, raw, **kwargs):
             randomization_datetime = rando_obj.allocated_datetime
             for patient in instance.patients.all():
                 update_patient_in_newly_randomized_group(
-                    patient, rando_obj, randomization_datetime
+                    patient, rando_obj.assignment, randomization_datetime
                 )
