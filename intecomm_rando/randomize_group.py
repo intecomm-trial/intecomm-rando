@@ -131,12 +131,14 @@ class RandomizeGroup:
         rs_obj.sid = self.randomization_list_obj.sid
         rs_obj.registration_status = RANDOMIZED
         rs_obj.randomization_list_model = self.randomization_list_obj._meta.label_lower
+        rs_obj.site = patient_log.site
         rs_obj.save(
             update_fields=[
                 "randomization_datetime",
                 "sid",
                 "registration_status",
                 "randomization_list_model",
+                "site",
             ]
         )
 
