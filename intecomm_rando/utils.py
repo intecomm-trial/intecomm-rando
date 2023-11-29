@@ -50,7 +50,10 @@ def update_appt_type_on_new_appointments(
 
 
 def update_patient_in_newly_randomized_group(
-    patient: PatientLog, assignment: str, randomization_datetime: datetime
+    patient: PatientLog,
+    assignment: str,
+    randomization_datetime: datetime,
+    skip_get_current_site: bool | None = None,
 ):
     if assignment in [COMMUNITY_ARM, FACILITY_ARM]:
         model_name = (
@@ -62,6 +65,7 @@ def update_patient_in_newly_randomized_group(
         schedule.put_on_schedule(
             subject_identifier=patient.subject_identifier,
             onschedule_datetime=randomization_datetime,
+            skip_get_current_site=skip_get_current_site,
         )
         update_appt_type_on_new_appointments(
             subject_identifier=patient.subject_identifier,
