@@ -59,4 +59,3 @@ class RegisteredGroup(SiteModelMixin, BaseUuidModel):
     class Meta(BaseUuidModel.Meta):
         verbose_name = "Registered Group"
         verbose_name_plural = "Registered Groups"
-        ordering = ["group_identifier"]
