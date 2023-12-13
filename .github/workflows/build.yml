@@ -11,8 +11,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11']
-        django-version: ['4.2', 'dev']
+        python-version: ['3.11', '3.12']
+        django-version: ['4.2', '5.0', 'dev']
+
+        exclude:
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.11'
+            django-version: 'dev'
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: mysql
+          MYSQL_ROOT_PASSWORD: mysql
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
       - name: Install pycups and words dependency
         run: |
