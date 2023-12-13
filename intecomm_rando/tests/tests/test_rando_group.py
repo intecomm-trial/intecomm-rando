@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import override_settings
+from django.test import override_settings, tag
 from django_mock_queries.query import MockSet
 from edc_constants.constants import COMPLETE, NO, UUID_PATTERN, YES
 from edc_randomization.site_randomizers import site_randomizers
 from edc_registration.models import RegisteredSubject
-from edc_sites.add_or_update_django_sites import add_or_update_django_sites
+from edc_sites.single_site import SingleSite
+from edc_sites.site import sites
+from edc_sites.utils import add_or_update_django_sites
 from intecomm_form_validators.tests.mock_models import PatientGroupMockModel
 from intecomm_form_validators.tests.test_case_mixin import TestCaseMixin
 
@@ -20,10 +23,9 @@ from intecomm_rando.randomize_group import (
     GroupRandomizationError,
 )
 from intecomm_rando.randomize_group import RandomizeGroup as BaseRandomizeGroup
-from intecomm_rando.randomizers import Randomizer
+from intecomm_rando.randomizers import Randomizer as BaseRandomizer
 
 from ..models import SubjectConsent
-from ..sites import all_sites
 
 
 class RandomizeGroup(BaseRandomizeGroup):
@@ -37,18 +39,34 @@ class RandomizeGroup(BaseRandomizeGroup):
         return f"999{str(uuid4())[0:10].upper()}"
 
 
+@override_settings(
+    SITE_ID=101,
+    EDC_SITES_AUTODISCOVER_SITES=False,
+)
 class RandoTests(TestCaseMixin):
-    def setUp(self) -> None:
+    @classmethod
+    def setUpTestData(cls):
+        class Randomizer(BaseRandomizer):
+            randomizationlist_folder = Path(__file__).resolve().parent.parent / "etc"
+
+        sites.initialize(initialize_site_model=True)
+        sites.register(
+            SingleSite(
+                101,
+                "kasangati",
+                country_code="ug",
+                country="uganda",
+                language_codes=["en"],
+                domain="kasangati.ug.example.com",
+            )
+        )
+        add_or_update_django_sites(verbose=False)
         site_randomizers._registry = {}
         site_randomizers.loaded = False
         site_randomizers.register(Randomizer)
 
-    @classmethod
-    def setUpTestData(cls):
-        for country, sites in all_sites.items():
-            add_or_update_django_sites(sites=sites, verbose=False)
-
-    @override_settings(SITE_ID=101)
+    @tag("2")
+    @override_settings(SITE_ID=101, EDC_SITES_AUTODISCOVER_SITES=False)
     def test_ok(self):
         group_identifier_as_pk = str(uuid4())
         patients = self.get_mock_patients(
@@ -60,7 +78,6 @@ class RandoTests(TestCaseMixin):
             consent=True,
             site=Site.objects.get(id=settings.SITE_ID),
         )
-        # patient_group = PatientGroupMockModel(randomized=True, patients=MockSet(*patients))
         patient_group = PatientGroupMockModel(
             randomized=False,
             randomize_now=YES,
@@ -94,6 +111,7 @@ class RandoTests(TestCaseMixin):
         except ObjectDoesNotExist:
             self.fail("ObjectDoesNotExist unexpectedly raised (RandomizationList)")
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_already_randomized(self):
         patients = self.get_mock_patients(
@@ -119,6 +137,7 @@ class RandoTests(TestCaseMixin):
         self.assertTrue(patient_group.randomized)
         self.assertRaises(GroupAlreadyRandomized, randomizer.randomize_group)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_incomplete_group(self):
         patients = self.get_mock_patients(
@@ -145,6 +164,7 @@ class RandoTests(TestCaseMixin):
         self.assertRaises(GroupRandomizationError, randomizer.randomize_group)
         self.assertFalse(patient_group.randomized)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_but_not_enough_members(self):
         patients = self.get_mock_patients(
@@ -173,6 +193,7 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient group must have at least", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_not_screened(self):
         patients = self.get_mock_patients(
@@ -201,6 +222,7 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient has not screened", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_not_consented(self):
         patients = self.get_mock_patients(
@@ -229,6 +251,7 @@ class RandoTests(TestCaseMixin):
         self.assertIn("Patient has not consented", str(cm.exception))
         self.assertFalse(patient_group.randomized)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_all_consented(self):
         group_identifier_as_pk = str(uuid4())
@@ -261,6 +284,7 @@ class RandoTests(TestCaseMixin):
             self.fail(f"GroupRandomizationError unexpectedly raised. Got {e}")
         self.assertTrue(patient_group.randomized)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_but_randomize_now_is_no(self):
         group_identifier_as_pk = str(uuid4())
@@ -293,6 +317,7 @@ class RandoTests(TestCaseMixin):
             self.fail("GroupRandomizationError unexpectedly raised.")
         self.assertTrue(patient_group.randomized)
 
+    @tag("1")
     @override_settings(SITE_ID=101)
     def test_complete_group_enough_members_all_consented_func(self):
         group_identifier_as_pk = str(uuid4())

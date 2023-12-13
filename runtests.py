@@ -24,6 +24,7 @@ project_settings = DefaultTestSettings(
     EDC_RANDOMIZATION_REGISTER_DEFAULT_RANDOMIZER=False,
     EDC_RANDOMIZATION_SKIP_VERIFY_CHECKS=True,
     EDC_RANDOMIZATION_LIST_PATH=os.path.join(base_dir, app_name, "tests", "etc"),
+    EDC_SITES_AUTODISCOVER_SITES=False,
     SUBJECT_VISIT_MODEL="edc_visit_tracking.subjectvisit",
     INSTALLED_APPS=[
         "django.contrib.admin",
