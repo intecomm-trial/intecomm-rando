@@ -2,7 +2,8 @@ from uuid import uuid4
 
 from django.db import models
 from edc_model.models import BaseUuidModel, HistoricalRecords
-from edc_sites.models import CurrentSiteManager, SiteModelMixin
+from edc_sites.managers import CurrentSiteManager
+from edc_sites.model_mixins import SiteModelMixin
 from edc_utils import get_utcnow
 
 
