@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Type
 
 from django.apps import apps as django_apps
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,18 +10,20 @@ from edc_randomization.constants import RANDOMIZED
 from edc_randomization.site_randomizers import site_randomizers
 from edc_randomization.utils import get_object_for_subject
 from edc_registration.models import RegisteredSubject
+from edc_sites import site_sites
 from edc_utils import get_utcnow
 from intecomm_form_validators import IN_FOLLOWUP
 
+from .constants import UGANDA
 from .exceptions import GroupAlreadyRandomized, GroupRandomizationError
 from .group_eligibility import assess_group_eligibility
 from .group_identifier import GroupIdentifier
 
 if TYPE_CHECKING:
-    from .models import RandomizationList
+    from intecomm_consent.models import SubjectConsentTz, SubjectConsentUg
+    from intecomm_screening.models import PatientGroup, PatientLog, Site
 
-if TYPE_CHECKING:
-    from intecomm_screening.models import PatientGroup, PatientLog
+    from .models import RandomizationList
 
 
 class RandomizeGroup:
@@ -116,7 +118,7 @@ class RandomizeGroup:
         patient_log.save(update_fields=["group_identifier"])
 
     def update_subject_consent(self, patient_log: PatientLog):
-        subject_consent = self.subject_consent_model_cls.objects.get(
+        subject_consent = self.subject_consent_model_cls(patient_log.site).objects.get(
             subject_identifier=patient_log.subject_identifier
         )
         subject_consent.group_identifier = self.instance.group_identifier
@@ -142,6 +144,11 @@ class RandomizeGroup:
             ]
         )
 
-    @property
-    def subject_consent_model_cls(self):
-        return django_apps.get_model(self.subject_consent_model)
+    def subject_consent_model_cls(
+        self, site: Site
+    ) -> Type[SubjectConsentUg, SubjectConsentTz]:
+        single_site = site_sites.get(site.id)
+        if single_site.country == UGANDA:
+            return django_apps.get_model("intecomm_consent.subjectconsentug")
+        else:
+            return django_apps.get_model("intecomm_consent.subjectconsenttz")

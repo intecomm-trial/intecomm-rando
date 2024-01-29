@@ -31,8 +31,7 @@ from ..models import SubjectConsent
 class RandomizeGroup(BaseRandomizeGroup):
     subject_consent_model = None
 
-    @property
-    def subject_consent_model_cls(self):
+    def subject_consent_model_cls(self, site: Site):
         return SubjectConsent
 
     def create_group_identifier(self):
