@@ -49,8 +49,8 @@ See also tables:
 .. |pypi| image:: https://img.shields.io/pypi/v/intecomm-rando.svg
     :target: https://pypi.python.org/pypi/intecomm-rando
 
-.. |actions| image:: https://github.com/intecomm-trial/intecomm-rando/workflows/build/badge.svg?branch=develop
-  :target: https://github.com/intecomm-trial/intecomm-rando/actions?query=workflow:build
+.. |actions| image:: https://github.com/intecomm-trial/intecomm-rando/actions/workflows/build.yml/badge.svg
+  :target: https://github.com/intecomm-trial/intecomm-rando/actions/workflows/build.yml
 
 .. |codecov| image:: https://codecov.io/gh/intecomm-trial/intecomm-rando/branch/develop/graph/badge.svg
   :target: https://codecov.io/gh/intecomm-trial/intecomm-rando
