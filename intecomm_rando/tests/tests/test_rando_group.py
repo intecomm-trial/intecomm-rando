@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from uuid import uuid4
 
@@ -93,12 +94,12 @@ class RandoTests(TestCaseMixin):
             )
             RegisteredSubject.objects.create(subject_identifier=patient.subject_identifier)
 
-        self.assertRegexpMatches(patient_group.group_identifier or "", UUID_PATTERN)
+        self.assertTrue(re.match(UUID_PATTERN, patient_group.group_identifier or ""))
         randomizer = RandomizeGroup(patient_group)
         randomizer.randomize_group()
 
         self.assertIsNotNone(patient_group.group_identifier)
-        self.assertNotRegexpMatches(patient_group.group_identifier, UUID_PATTERN)
+        self.assertFalse(re.match(UUID_PATTERN, patient_group.group_identifier))
         try:
             RegisteredGroup.objects.get(group_identifier=patient_group.group_identifier)
         except ObjectDoesNotExist:
