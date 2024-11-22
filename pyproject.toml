@@ -64,6 +64,7 @@ commands =
     pip install -U pip
     python --version
     pip --version
+    pip install -U intecomm-form-validators
     pip freeze
     coverage run -a runtests.py
     coverage report
